@@ -1,4 +1,4 @@
-import googleapiclient
+import googleapiclient.discovery
 
 from typing import List, Set, Dict, Tuple, Optional
 
