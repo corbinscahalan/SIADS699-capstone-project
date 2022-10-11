@@ -55,3 +55,17 @@ def get_uploads(yt_client: object, channel_id: str, max_vids: int = 50) -> List[
     upload_list = get_playlist(yt_client, upload_id, max_vids = max_vids)
 
     return upload_list
+
+
+def get_channel_from_vid(yt_client: object, vid_id: str) -> str:
+
+
+    results = yt_client.videos().list(
+        part = 'snippet',
+        id = vid_id
+    ).execute()
+
+    channel_id = results['items'][0]['snippet']['channelId']
+
+    return channel_id
+    
