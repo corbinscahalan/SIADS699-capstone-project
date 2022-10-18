@@ -44,7 +44,7 @@ def get_vid_details(url: str, path_to_subtitle_folder:str, verbose:int=0) -> Dic
     return info
 
 
-def extract_subs(title:str, path_to_subs:str) -> str:
+def extract_subs(title:str, path_to_subs:str) -> List[str]:
     """Extracts the saved subtitles
 
     Args:
@@ -52,16 +52,18 @@ def extract_subs(title:str, path_to_subs:str) -> str:
         path_to_subs (str): folder where subtitles are saved
 
     Returns:
-        str: subtitles
+        List[str]: subtitles
     """
     file = [path for path in os.listdir(path_to_subs) if path.startswith(title)][0]
-    subs = set()
+    subs = []
     with open(os.path.join(path_to_subs, file), 'r') as f:
         for line in f.readlines():
-            if re.search(r'^[\sa-zA-Z]+', line) is not None:
-                if (not line.startswith('Kind: ')) and (not line.startswith('Language: ')) and (not line.startswith('WEB')):
-                    subs.add(line)
-    return [line for line in list(subs) if line.strip(' ') != '\n'][0]
+            if (not line.startswith('Kind: ')) and (not line.startswith('Language: ')) and (not line.startswith('WEB')) and (not line.startswith('0')):
+                if line not in subs:
+                    subs.append(line)
+                else:
+                    pass
+    return [line for line in subs if line.strip(' ') != '\n']
 
 
 def extract_by_id(video_id: str, subs_folder: str) -> pd.Series:
@@ -77,16 +79,50 @@ def extract_by_id(video_id: str, subs_folder: str) -> pd.Series:
     """
     url = 'https://www.youtube.com/watch?v=' + video_id
     keys = [
+        # 'id',
+        # 'title',
+        # 'formats',
+        # 'thumbnails',
         'description',
+        # 'upload_date',
+        # 'uploader',
+        # 'uploader_id',
+        # 'uploader_url',
+        # 'channel_id',
+        # 'channel_url',
         'duration',
-        'like_count',
+        # 'view_count',
         'average_rating',
+        'age_limit',
+        # 'webpage_url',
         'categories',
         'tags',
-        'resolution',
-        'height',
+        'is_live',
+        # 'automatic_captions',
+        # 'subtitles',
+        'like_count',
+        # 'channel',
+        # 'extractor',
+        # 'webpage_url_basename',
+        # 'extractor_key',
+        # 'playlist',
+        # 'playlist_index',
+        # 'thumbnail',
+        # 'display_id',
+        # 'requested_subtitles',
+        # 'requested_formats',
+        # 'format',
+        # 'format_id',
         'width',
-        'subtitles'
+        'height',
+        'resolution',
+        'fps',
+        # 'vcodec',
+        # 'vbr',
+        # 'stretched_ratio',
+        # 'acodec',
+        # 'abr',
+        # 'ext'
     ]
     info_dict = {key: None for key in keys}
     vid_info = get_vid_details(url, subs_folder)
@@ -112,17 +148,46 @@ def extract_all(urls: List[str], subs_folder:str) -> pd.DataFrame:
     columns = [
         'id',
         'title',
+        # 'formats',
+        # 'thumbnails',
         'description',
+        'upload_date',
+        # 'uploader',
+        # 'uploader_id',
+        # 'uploader_url',
+        'channel_id',
+        'channel_url',
         'duration',
         'view_count',
-        'like_count',
         'average_rating',
+        'age_limit',
+        # 'webpage_url',
         'categories',
         'tags',
-        'resolution',
-        'height',
+        'is_live',
+        'like_count',
+        'channel',
+        # 'extractor',
+        # 'webpage_url_basename',
+        # 'extractor_key',
+        # 'playlist',
+        # 'playlist_index',
+        # 'thumbnail',
+        # 'display_id',
+        # 'requested_subtitles',
+        # 'requested_formats',
+        # 'format',
+        # 'format_id',
         'width',
-        'subtitles'
+        'height',
+        'resolution',
+        'fps',
+        # 'vcodec',
+        # 'vbr',
+        # 'stretched_ratio',
+        # 'acodec',
+        # 'abr',
+        # 'ext'
     ]
     data_frame = pd.DataFrame(columns=columns)
     for url in urls:
@@ -141,3 +206,4 @@ def extract_all(urls: List[str], subs_folder:str) -> pd.DataFrame:
         data_frame.reset_index(drop=True, inplace=True)
 
     return data_frame
+
