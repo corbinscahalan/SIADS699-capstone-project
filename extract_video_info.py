@@ -98,8 +98,6 @@ def extract_by_id(video_id: str, subs_folder: str) -> pd.Series:
         'categories',
         'tags',
         'is_live',
-        # 'automatic_captions',
-        # 'subtitles',
         'like_count',
         # 'channel',
         # 'extractor',
