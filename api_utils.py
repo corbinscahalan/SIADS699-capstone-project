@@ -10,6 +10,8 @@
 
 
 import googleapiclient.discovery
+import pandas as pd
+import numpy as np
 from typing import List, Set, Dict, Tuple, Optional
 
 def make_client(api_key: str) -> object:
@@ -32,14 +34,36 @@ def get_playlist(yt_client: object, playlist_id: str, max_vids: int = 50) -> Lis
     # Returns:
     # List of video ID strings
 
+    
+    # Get initial batch of results
+
     results = yt_client.playlistItems().list(
         playlistId = playlist_id,
-        part = ['contentDetails'],
+        part = 'snippet',
         maxResults = max_vids
     ).execute()
-    
-    video_list = [ video['contentDetails']['videoId'] for video in results['items'] ]
 
+    video_list = [ video['snippet']['resourceId']['videoId'] for video in results['items'] ]
+
+    max_vids = max_vids - 50
+
+    while ('nextPageToken' in results) and (max_vids > 0):
+
+        # Continue pulling playlist results as long as there is a 'next page'
+
+        results = yt_client.playlistItems().list(
+            part = 'snippet',
+            playlistId = playlist_id,
+            pageToken = results['nextPageToken'],
+            maxResults = max_vids
+        ).execute()
+
+        for video in results['items']:
+
+            video_list.append(video['snippet']['resourceId']['videoId'])
+
+        max_vids = max_vids - 50
+        
     return video_list        
 
 
@@ -89,9 +113,10 @@ def get_channel_from_vid(yt_client: object, vid_id: str) -> str:
     
 
 
-def extract_by_query(yt_client: object, query: str, max_channels: int = 5, max_vids: int = 5) -> object:
+def extract_by_query(yt_client: object, query: str, max_channels: int = 50, max_vids: int = 100) -> object:
 
     # Performs data extraction from YouTube API using a keyword(s) query
+    # Quota estimates use max_channels = 50, max_vids = 100
 
     # Parameters:
     # yt_client -- YouTube API client for requests
@@ -103,7 +128,7 @@ def extract_by_query(yt_client: object, query: str, max_channels: int = 5, max_v
     # Pandas dataframe with channel and video features
 
     chan_cols = [ 'chan_id', 'chan_name', 'chan_viewcount', 'chan_subcount', 'chan_start_dt', 'chan_thumb', 'chan_vidcount']
-    vid_cols = ['vid_id', 'vid_name', 'vid_publish_dt', 'vid_thumb', 'vid_duration', 'vid_caption', 'vid_viewcount']#, 'vid_likecount', 'vid_commentcount']
+    vid_cols = ['vid_id', 'vid_name', 'vid_publish_dt', 'vid_thumb', 'vid_duration', 'vid_caption', 'vid_viewcount', 'vid_likecount', 'vid_commentcount']
 
     df = pd.DataFrame(columns = chan_cols + vid_cols)
 
@@ -136,11 +161,10 @@ def extract_by_query(yt_client: object, query: str, max_channels: int = 5, max_v
 
         chan_uploads_id = chan_det['relatedPlaylists']['uploads']
 
-        # Up to 10 quota x 50 channels <= 500 quota
-
         # Get the id values for the channel's vids
+        # 2 quota (100 vids = 2 x 50) x 50 channels = 100 quota
 
-        vid_ids = get_uploads(yt_client, channel_id, max_vids)
+        vid_ids = get_playlist(yt_client, chan_uploads_id, max_vids)
 
         for vid_id in vid_ids:
 
@@ -149,20 +173,31 @@ def extract_by_query(yt_client: object, query: str, max_channels: int = 5, max_v
                 id = vid_id
             ).execute()['items'][0]
 
-            # 1 quota x 50 channels x 500 videos = 25000 quota
+            # 1 quota x 50 channels x 100 videos = 5000 quota
 
             vid_snip = vid_info['snippet']
             vid_det = vid_info['contentDetails']
             vid_stats = vid_info['statistics']
 
+            # If comments are turned off, the key is missing 
+
+            if 'commentCount' in vid_stats:
+                vid_comment_count = vid_stats['commentCount']
+            else:
+                vid_comment_count = np.nan
+
+
             # Finish building rows, add to dataframe
 
             vid_values = [ vid_id, vid_snip['title'], vid_snip['publishedAt'], vid_snip['thumbnails']['default']['url'], 
-                            vid_det['duration'], vid_det['caption'], vid_stats['viewCount']] #, vid_stats['likeCount'], vid_stats['commentCount']]
+                            vid_det['duration'], vid_det['caption'], vid_stats['viewCount'], vid_stats['likeCount'], vid_comment_count]
 
             current_row = len(df.index)+1
 
             df.loc[current_row,:] = chan_values + vid_values
+
+
+    # Total quota estimate: 100 + 50 + 100 + 5000 = 5250
 
     return df
 
