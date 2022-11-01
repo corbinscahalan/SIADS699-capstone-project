@@ -113,7 +113,7 @@ def get_channel_from_vid(yt_client: object, vid_id: str) -> str:
     
 
 
-def extract_by_query(yt_client: object, query: str, max_channels: int = 50, max_vids: int = 100) -> object:
+def extract_by_query(yt_client: object, query: str, max_channels: int = 50, max_vids: int = 100, excluded_channels: List = []) -> pd.DataFrame:
 
     # Performs data extraction from YouTube API using a keyword(s) query
     # Quota estimates use max_channels = 50, max_vids = 100
@@ -122,7 +122,8 @@ def extract_by_query(yt_client: object, query: str, max_channels: int = 50, max_
     # yt_client -- YouTube API client for requests
     # query -- A string of key words, presumably related to culinary topics
     # max_channels -- the number of channels to survey              
-    # max_vids -- the number of videos to pull from each channel    
+    # max_vids -- the number of videos to pull from each channel  
+    # excluded_channels -- optional list of channel ids to exclude from results (excluded channels are still deducted from the max_channels total)  
 
     # Returns:
     # Pandas dataframe with channel and video features
@@ -143,6 +144,9 @@ def extract_by_query(yt_client: object, query: str, max_channels: int = 50, max_
 
     for channel in channel_results['items']:
         channel_id = channel['id']['channelId']
+
+        if channel_id in excluded_channels:
+            continue
 
         chan_info = yt_client.channels().list(
             part = ['snippet', 'contentDetails', 'statistics', 'topicDetails'],
