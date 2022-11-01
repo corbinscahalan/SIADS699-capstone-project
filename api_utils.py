@@ -121,13 +121,13 @@ def extract_by_query(yt_client: object, query: str, max_channels: int = 50, max_
     # Parameters:
     # yt_client -- YouTube API client for requests
     # query -- A string of key words, presumably related to culinary topics
-    # max_channels -- the number of channels to survey              -->> DO NOT CHANGE FROM DEFAULT VALUE IN CURRENT BUILD
-    # max_vids -- the number of videos to pull from each channel    -->> DO NOT CHANGE FROM DEFAULT VALUE IN CURRENT BUILD
+    # max_channels -- the number of channels to survey              
+    # max_vids -- the number of videos to pull from each channel    
 
     # Returns:
     # Pandas dataframe with channel and video features
 
-    chan_cols = [ 'chan_id', 'chan_name', 'chan_viewcount', 'chan_subcount', 'chan_start_dt', 'chan_thumb', 'chan_vidcount']
+    chan_cols = [ 'chan_query', 'chan_id', 'chan_name', 'chan_viewcount', 'chan_subcount', 'chan_start_dt', 'chan_thumb', 'chan_vidcount']
     vid_cols = ['vid_id', 'vid_name', 'vid_publish_dt', 'vid_thumb', 'vid_duration', 'vid_caption', 'vid_viewcount', 'vid_likecount', 'vid_commentcount']
 
     df = pd.DataFrame(columns = chan_cols + vid_cols)
@@ -157,7 +157,7 @@ def extract_by_query(yt_client: object, query: str, max_channels: int = 50, max_
 
         # Building dataframe rows, starting with channel features.
 
-        chan_values = [ channel_id, chan_snip['title'], chan_stats['viewCount'], chan_stats['subscriberCount'], chan_snip['publishedAt'], chan_snip['thumbnails']['default']['url'], chan_stats['videoCount'] ]
+        chan_values = [ query, channel_id, chan_snip['title'], int(chan_stats['viewCount']), int(chan_stats['subscriberCount']), chan_snip['publishedAt'], chan_snip['thumbnails']['default']['url'], int(chan_stats['videoCount']) ]
 
         chan_uploads_id = chan_det['relatedPlaylists']['uploads']
 
@@ -182,15 +182,21 @@ def extract_by_query(yt_client: object, query: str, max_channels: int = 50, max_
             # If comments are turned off, the key is missing 
 
             if 'commentCount' in vid_stats:
-                vid_comment_count = vid_stats['commentCount']
+                vid_comment_count = int(vid_stats['commentCount'])
             else:
-                vid_comment_count = np.nan
+                vid_comment_count = 0
 
+            # Key for likes can be missing 
+
+            if 'likeCount' in vid_stats:
+                vid_like_count = int(vid_stats['likeCount'])
+            else:
+                vid_like_count = 0
 
             # Finish building rows, add to dataframe
 
             vid_values = [ vid_id, vid_snip['title'], vid_snip['publishedAt'], vid_snip['thumbnails']['default']['url'], 
-                            vid_det['duration'], vid_det['caption'], vid_stats['viewCount'], vid_stats['likeCount'], vid_comment_count]
+                            vid_det['duration'], vid_det['caption'], int(vid_stats['viewCount']), vid_like_count, vid_comment_count]
 
             current_row = len(df.index)+1
 
