@@ -197,10 +197,17 @@ def extract_by_query(yt_client: object, query: str, max_channels: int = 50, max_
             else:
                 vid_like_count = 0
 
+            # Key for views can be missing
+                
+            if 'viewCount' in vid_stats:
+                vid_view_count = int(vid_stats['viewCount'])
+            else:
+                vid_view_count = 0
+
             # Finish building rows, add to dataframe
 
             vid_values = [ vid_id, vid_snip['title'], vid_snip['publishedAt'], vid_snip['thumbnails']['default']['url'], 
-                            vid_det['duration'], vid_det['caption'], int(vid_stats['viewCount']), vid_like_count, vid_comment_count]
+                            vid_det['duration'], vid_det['caption'], vid_view_count, vid_like_count, vid_comment_count]
 
             current_row = len(df.index)+1
 
