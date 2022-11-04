@@ -1,6 +1,9 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 
+#Image and subtitle folder
+data/
+
 # Jupyter Notebook
 .ipynb_checkpoints
 
