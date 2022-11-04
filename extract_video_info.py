@@ -67,7 +67,7 @@ def extract_subs(sub_filename:str, path_to_subs:str) -> List[str]:
                     subs.append(line)
                 else:
                     pass
-
+    os.remove(file)
     return [line for line in subs if line.strip(' ') != '\n']
 
 
