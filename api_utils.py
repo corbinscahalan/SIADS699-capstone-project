@@ -174,9 +174,9 @@ def extract_by_query(yt_client: object, query: str, max_channels: int = 50, max_
 
             vid_ids = get_playlist(yt_client, chan_uploads_id, max_vids)
 
-        except:
+        except Exception:
 
-            print(f'Error retrieving uploads for channel {chan_snip['title']}, ID {channel_id}.')
+            print(f"Error retrieving uploads for channel {chan_snip['title']}, ID {channel_id}.")
 
             continue
 
