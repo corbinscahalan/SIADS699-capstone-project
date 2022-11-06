@@ -168,7 +168,17 @@ def extract_by_query(yt_client: object, query: str, max_channels: int = 50, max_
         # Get the id values for the channel's vids
         # 2 quota (100 vids = 2 x 50) x 50 channels = 100 quota
 
-        vid_ids = get_playlist(yt_client, chan_uploads_id, max_vids)
+        # Need to catch upload errors, caused (?) by channels with no videos
+
+        try:
+
+            vid_ids = get_playlist(yt_client, chan_uploads_id, max_vids)
+
+        except:
+
+            print(f'Error retrieving uploads for channel {chan_snip['title']}, ID {channel_id}.')
+
+            continue
 
         for vid_id in vid_ids:
 
