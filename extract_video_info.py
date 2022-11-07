@@ -32,7 +32,7 @@ def get_vid_details(url: str, path_to_thumbs:str, verbose:int=0) -> Dict:
     ydl_params = {
         'verbose': True if verbose > 1 else False,
         'quiet': True if verbose == 0 else False,
-        'writesubtitles': True,
+        # 'writesubtitles': True,
         'writeautomaticsub': True,
         'skip_download': True,
         'subtitleslangs': ['en',],
@@ -62,7 +62,10 @@ def extract_subs(sub_filename:str, path_to_subs:str) -> List[str]:
     subs = []
     with open(file, 'r') as f:
         for line in f.readlines():
-            if (not line.startswith('Kind: ')) and (not line.startswith('Language: ')) and (not line.startswith('WEB')) and (not line.startswith('0')):
+            
+            # 
+            if ('-->' not in line) and ('<' not in line) and (line.strip() != '\n') and (not line.startswith('Kind: ')) and (not line.startswith('Language: ')) and (not line.startswith('WEB')) and (not line.startswith('0')):
+                print(line)
                 if line not in subs:
                     subs.append(line)
                 else:
@@ -151,4 +154,3 @@ def extract_by_id(video_id:str, thumb_folder:str, ydl_verbose:int=0) -> pd.Serie
 
 
     return pd.Series(info_dict)
-
