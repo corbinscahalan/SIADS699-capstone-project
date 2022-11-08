@@ -63,9 +63,8 @@ def extract_subs(sub_filename:str, path_to_subs:str) -> List[str]:
     with open(file, 'r') as f:
         for line in f.readlines():
             
-            # 
+            
             if ('-->' not in line) and ('<' not in line) and (line.strip() != '\n') and (not line.startswith('Kind: ')) and (not line.startswith('Language: ')) and (not line.startswith('WEB')) and (not line.startswith('0')):
-                print(line)
                 if line not in subs:
                     subs.append(line)
                 else:
