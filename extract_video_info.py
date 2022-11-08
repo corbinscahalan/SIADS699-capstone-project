@@ -135,7 +135,7 @@ def extract_by_id(video_id:str, thumb_folder:str, ydl_verbose:int=0) -> pd.Serie
     
     try:
         vid_info = get_vid_details(url, thumb_folder, ydl_verbose)
-    except:
+    except Exception:
         return pd.Series(info_dict)
 
     for key in info_dict.keys():
@@ -149,7 +149,7 @@ def extract_by_id(video_id:str, thumb_folder:str, ydl_verbose:int=0) -> pd.Serie
     try:
         sub_ext = '.en.' + vid_info['requested_subtitles']['en']['ext']
         info_dict['subtitles'] = extract_subs(video_id + sub_ext, thumb_folder)
-    except:
+    except Exception:
         info_dict['subtitles'] = ''
 
 
