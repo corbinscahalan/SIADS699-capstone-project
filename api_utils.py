@@ -229,4 +229,33 @@ def extract_by_query(yt_client: object, query: str, max_channels: int = 50, max_
     return df
 
 
+def linear_pop_metric(df: pd.DataFrame) -> pd.DataFrame:
 
+    # Performs a popularity metric based on a channel's "baseline" linear relationship between views and likes.
+
+    # Parameters:
+    # df -- a dataframe of the type created by extract_by_query
+
+    # Returns:
+    # out_frame -- A dataframe with an additional column 'pop_metric'
+
+    out_frame = pd.DataFrame(columns = df.columns)
+
+    for group, frame in df.groupby('chan_id'):
+
+        model = linear_model.LinearRegression()
+
+        X = np.array(frame.vid_viewcount).reshape((len(frame),1))
+        y = np.array(frame.vid_likecount).reshape((len(frame),1))
+
+        # Fit a linear model for each channel
+        
+        model.fit(X,y)
+
+        # Find the difference between actual views and predicted views, divide by actual to normalize.  (+1 to avoid division by zero)
+
+        frame['pop_metric'] = ( (y - model.predict(X)) / (y+1) ).flatten()
+
+        out_frame = pd.concat([out_frame, frame], ignore_index = True)
+
+    return out_frame
