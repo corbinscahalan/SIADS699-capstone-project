@@ -32,7 +32,7 @@ def get_vid_details(url: str, path_to_thumbs:str, verbose:int=0) -> Dict:
     ydl_params = {
         'verbose': True if verbose > 1 else False,
         'quiet': True if verbose == 0 else False,
-        # 'writesubtitles': True,
+        'writesubtitles': True,
         'writeautomaticsub': True,
         'skip_download': True,
         'subtitleslangs': ['en',],
