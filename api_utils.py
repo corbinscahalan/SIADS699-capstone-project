@@ -228,6 +228,101 @@ def extract_by_query(yt_client: object, query: str, max_channels: int = 50, max_
 
     return df
 
+def find_expans_chan(df: pd.DataFrame, min_avail: int = 50, max_on_hand: int = 200) -> List[str]:
+
+    # Creates a list of channel ids which are appropriate candidates for the expand_channel function
+
+    # Parameters:
+    # df -- Pandas dataframe of the type returned by extract_by_query
+    # min_avail -- The minimum number of available additional videos for a channel to be selected as candidate
+    # max_on_hand -- Channel must have no more than this number of rows in df to be selected as candidates
+    # 
+    # Returns:
+    # cand_list -- list of channel ids
+
+    # With the default settings, the function returns a list of channel ids in the data base for which:
+    # (1) No more than 200 of the channel's videos currently appear as rows in the dataframe and
+    # (2) The channel has at least 50 more videos available on YouTube, not appearing in the dataframe yet.
+
+    cand_list = []
+
+    for group, frame in df.groupby('chan_id'):
+
+        num_on_hand = len(frame)
+        num_avail = frame.chan_vidcount.max() - num_on_hand
+
+        if (num_avail >= min_avail) & (num_on_hand <= max_on_hand):
+
+            cand_list.append(group)
+
+    return cand_list
+
+
+def expand_channel(yt_client: object, df: pd.DataFrame, channel_id: str, max_vids: int = 200) -> pd.DataFrame:
+
+    # Extracts data for additional videos from an existing channel in a dataframe
+    
+    # Parameters:
+    # yt_client -- a YouTube API client for making requests
+    # df -- a Pandas dataframe of the type returned by extract_by_query
+    # channel_id -- the id string for a YouTube channel
+    # max_vids -- the maximum number of videos to extract data for
+
+    # Returns:
+    # new_df -- dataframe containing ONLY the newly extracted lines; should be concatenated with an existing dataframe, e.g. df
+    
+    chan_cols = [ 'chan_query', 'chan_id', 'chan_name', 'chan_viewcount', 'chan_subcount', 'chan_start_dt', 'chan_thumb', 'chan_vidcount']
+    vid_cols = ['vid_id', 'vid_name', 'vid_publish_dt', 'vid_thumb', 'vid_duration', 'vid_caption', 'vid_viewcount', 'vid_likecount', 'vid_commentcount']
+
+    new_df = pd.DataFrame(columns = chan_cols + vid_cols)
+
+    chan_df = df[ df.chan_id == channel_id]
+
+    chan_values = list(chan_df[chan_cols].iloc[1,:])
+
+    old_id_list = list(chan_df.vid_id)
+
+    full_id_list = get_uploads(yt_client, channel_id, max_vids + len(old_id_list))
+
+    new_id_list = [ x for x in full_id_list if x not in old_id_list ]
+
+    # Add a line for each new video, same code used in extract_by_query
+
+    for vid_id in new_id_list:
+
+        vid_info = yt_client.videos().list(
+            part = ['contentDetails', 'snippet', 'statistics'],
+            id = vid_id
+        ).execute()['items'][0]
+
+        vid_snip = vid_info['snippet']
+        vid_det = vid_info['contentDetails']
+        vid_stats = vid_info['statistics']
+
+        if 'commentCount' in vid_stats:
+            vid_comment_count = int(vid_stats['commentCount'])
+        else:
+            vid_comment_count = 0
+
+        if 'likeCount' in vid_stats:
+            vid_like_count = int(vid_stats['likeCount'])
+        else:
+            vid_like_count = 0
+            
+        if 'viewCount' in vid_stats:
+            vid_view_count = int(vid_stats['viewCount'])
+        else:
+            vid_view_count = 0
+
+        vid_values = [ vid_id, vid_snip['title'], vid_snip['publishedAt'], vid_snip['thumbnails']['default']['url'], 
+                        vid_det['duration'], vid_det['caption'], vid_view_count, vid_like_count, vid_comment_count]
+
+        current_row = len(new_df.index)+1
+
+        new_df.loc[current_row,:] = chan_values + vid_values
+
+
+    return new_df
 
 def linear_pop_metric(df: pd.DataFrame) -> pd.DataFrame:
 
