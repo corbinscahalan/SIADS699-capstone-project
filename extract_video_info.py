@@ -13,7 +13,6 @@ import pandas as pd
 from typing import List, Dict
 import os
 import re
-import pandas as pd
 
 
 
@@ -64,7 +63,7 @@ def extract_subs(sub_filename:str, path_to_subs:str) -> List[str]:
         for line in f.readlines():
             
             
-            if ('-->' not in line) and ('<' not in line) and (line.strip() != '\n') and (not line.startswith('Kind: ')) and (not line.startswith('Language: ')) and (not line.startswith('WEB')) and (not line.startswith('0')):
+            if ('-->' not in line) and ('</c>' not in line) and (line.strip() != '\n') and (not line.startswith('Kind: ')) and (not line.startswith('Language: ')) and (not line.startswith('WEB')) and (not line.startswith('0')):
                 if line not in subs:
                     subs.append(line)
                 else:
@@ -153,3 +152,4 @@ def extract_by_id(video_id:str, thumb_folder:str, ydl_verbose:int=0) -> pd.Serie
 
 
     return pd.Series(info_dict)
+
