@@ -149,11 +149,15 @@ if __name__ == '__main__':
     data_file = ''
     data = pd.read_csv(data_file) if data_file != '' else None
 
-    # where to save intermediate results (after each query) and final results
-    save_folder = ''
+    # where to save intermediate results (after each query) if blank intermediate saves will not happen
+    intermediate_save_folder = ''
 
     # extract data
-    finished_data, excluded_channel_set = extract_all(api_list, query_list, excluded_channels, data, with_terminal=False, intermediate_save_folder=save_folder)
+    finished_data, excluded_channel_set = extract_all(api_list, query_list, excluded_channels, data, with_terminal=False, intermediate_save_folder=intermediate_save_folder if intermediate_save_folder != '' else None)
+
+
+    # final save folder
+    save_folder = ''
 
     # save results to csv
     results_save_name = 'extracted_data.csv'
