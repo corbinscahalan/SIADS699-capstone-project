@@ -68,7 +68,7 @@ def extract_subs(sub_filename:str, path_to_subs:str) -> List[str]:
                     subs.append(line)
                 else:
                     pass
-    os.remove(file)
+    # os.remove(file)
     return [line for line in subs if line.strip(' ') != '\n']
 
 
@@ -145,8 +145,9 @@ def extract_by_id(video_id:str, thumb_folder:str, ydl_verbose:int=0) -> pd.Serie
 
     
     try:
-        sub_ext = '.en.' + vid_info['requested_subtitles']['en']['ext']
-        info_dict['subtitles'] = extract_subs(video_id + sub_ext, thumb_folder)
+        # sub_ext = '.en.' + vid_info['requested_subtitles']['en']['ext']
+        sub_file = [file.name for file in os.scandir(thumb_folder) if file.name.startswith(video_id + '.en')][0]
+        info_dict['subtitles'] = extract_subs(sub_file, thumb_folder)
     except Exception:
         info_dict['subtitles'] = ''
 
