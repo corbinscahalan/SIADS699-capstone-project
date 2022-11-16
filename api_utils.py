@@ -13,6 +13,8 @@ import googleapiclient.discovery
 import pandas as pd
 import numpy as np
 from typing import List, Set, Dict, Tuple, Optional
+from sklearn import linear_model
+
 
 def make_client(api_key: str) -> object:
 
@@ -324,7 +326,7 @@ def expand_channel(yt_client: object, df: pd.DataFrame, channel_id: str, max_vid
 
     return new_df
 
-def linear_pop_metric(df: pd.DataFrame) -> pd.DataFrame:
+def linear_pop_metric(df: pd.DataFrame, include_comments: bool = False) -> pd.DataFrame:
 
     # Performs a popularity metric based on a channel's "baseline" linear relationship between views and likes.
 
@@ -340,8 +342,12 @@ def linear_pop_metric(df: pd.DataFrame) -> pd.DataFrame:
 
         model = linear_model.LinearRegression()
 
-        X = np.array(frame.vid_viewcount).reshape((len(frame),1))
-        y = np.array(frame.vid_likecount).reshape((len(frame),1))
+        X = np.array(frame[['vid_viewcount', 'vid_commentcount']])
+        y = np.array(frame[['vid_likecount']])
+
+        if not include_comments:
+
+            X = X[:, [0]]
 
         # Fit a linear model for each channel
         
@@ -349,7 +355,7 @@ def linear_pop_metric(df: pd.DataFrame) -> pd.DataFrame:
 
         # Find the difference between actual views and predicted views, divide by actual to normalize.  (+1 to avoid division by zero)
 
-        frame['pop_metric'] = ( (y - model.predict(X)) / (y+1) ).flatten()
+        frame.loc[:,'pop_metric'] = ( (y - model.predict(X)) / (model.predict(X)) ).flatten()
 
         out_frame = pd.concat([out_frame, frame], ignore_index = True)
 
