@@ -37,6 +37,7 @@ def get_vid_details(url: str, path_to_thumbs:str, verbose:int=0) -> Dict:
         'subtitleslangs': ['en',],
         'writethumbnail': True,
         'nooverwrites': True,
+        'age_limit': 40,
         'outtmpl': os.path.join(path_to_thumbs, '%(id)s.%(ext)s')
     }
 
@@ -68,7 +69,7 @@ def extract_subs(sub_filename:str, path_to_subs:str) -> List[str]:
                     subs.append(line)
                 else:
                     pass
-    # os.remove(file)
+    os.remove(file)
     return [line for line in subs if line.strip(' ') != '\n']
 
 
@@ -127,13 +128,16 @@ def extract_by_id(video_id:str, thumb_folder:str, ydl_verbose:int=0) -> pd.Serie
         # 'stretched_ratio',
         'acodec',
         'abr',
-        # 'ext'
+        # 'ext',
+        'thumb_name',
+        'subtitles'
     ]
     info_dict = {key: None for key in keys}
     
     try:
         vid_info = get_vid_details(url, thumb_folder, ydl_verbose)
     except Exception:
+        info_dict['subtitles'] = '---missing---'
         return pd.Series(info_dict)
 
     for key in info_dict.keys():
@@ -149,7 +153,7 @@ def extract_by_id(video_id:str, thumb_folder:str, ydl_verbose:int=0) -> pd.Serie
         # sub_file = [file.name for file in os.scandir(thumb_folder) if file.name.startswith(video_id + '.en')][0]
         info_dict['subtitles'] = extract_subs(sub_file, thumb_folder)
     except Exception:
-        info_dict['subtitles'] = ''
+        info_dict['subtitles'] = '---missing---'
 
 
     return pd.Series(info_dict)
