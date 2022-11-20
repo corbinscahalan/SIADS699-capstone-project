@@ -138,6 +138,7 @@ def extract_by_id(video_id:str, thumb_folder:str, ydl_verbose:int=0) -> pd.Serie
         vid_info = get_vid_details(url, thumb_folder, ydl_verbose)
     except Exception:
         info_dict['subtitles'] = '---missing---'
+        info_dict['thumb_name'] = '---missing---'
         return pd.Series(info_dict)
 
     for key in info_dict.keys():
