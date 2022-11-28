@@ -6,11 +6,11 @@ From bloggers to influencers, the creator economy is estimated to be worth more 
 
 ## Installation
 Clone our repo via 
-    git clone https://github.com/corbinscahalan/SIADS699-capstone-project.git
+<code>git clone https://github.com/corbinscahalan/SIADS699-capstone-project.git</code>
 
 ## Installation
 Install python package dependencies via
-    pip install -r requirements.txt
+<code>pip install -r requirements.txt</code>
 
 ## Demo Notebooks & Files
 <ol>
