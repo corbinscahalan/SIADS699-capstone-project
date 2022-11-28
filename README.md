@@ -8,7 +8,7 @@ From bloggers to influencers, the creator economy is estimated to be worth more 
   <li>Install python package dependencies via <code>pip install -r requirements.txt</code></li>
 </ol>
 
-## Demo Notebooks & Files
+# Demo Notebooks & Files
 <ol>
   <li>Data Extraction & Cleaning</li>
   <li>RNN</li>
