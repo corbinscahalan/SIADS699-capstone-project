@@ -14,3 +14,6 @@ From bloggers to influencers, the creator economy is estimated to be worth more 
   <li>RNN</li>
   <li>CNN</li>
 </ol>
+
+## Data Access
+To access YouTube video data, you will need to creaete a developer account for <a href='https://developers.google.com/youtube/v3' target='_blank'>YouTube API access</a> and install <a href='https://github.com/ytdl-org/youtube-dl/' target='_blank'>youtube-dl</a>. 
