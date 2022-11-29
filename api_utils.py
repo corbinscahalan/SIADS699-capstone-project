@@ -382,17 +382,17 @@ def scrape_channel_ids(url, id_type):
 
     hrefs=[]
     for item in urls:
-    hrefs.append(item.get('href'))
+        hrefs.append(item.get('href'))
 
     youtube_urls=[]
     for item in hrefs:
-    if id_type == 'channel_id':
-        youtube_urls.append(re.findall("https://www.youtube.com/channel[^\s?]+", item))
-    if id_type == 'channel_username':
-        youtube_urls.append(re.findall("https://www.youtube.com/c/[^\s?]+", item))
+        if id_type == 'channel_id':
+            youtube_urls.append(re.findall("https://www.youtube.com/channel[^\s?]+", item))
+        if id_type == 'channel_username':
+            youtube_urls.append(re.findall("https://www.youtube.com/c/[^\s?]+", item))
 
 
-    flat_list = [str(item.split('/')[4]) for sublist in youtube_urls for item in sublist] #just the channel ids
+    flat_list = [str(item.split('/')[4]) for sublist in youtube_urls for item in sublist]
 
     return flat_list
 
