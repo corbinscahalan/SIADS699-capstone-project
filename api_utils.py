@@ -17,6 +17,7 @@ from sklearn import linear_model
 import requests
 from bs4 import BeautifulSoup
 import re
+import scipy.stats as stats
 import urllib.request
 import json
 import isodate
@@ -332,7 +333,7 @@ def expand_channel(yt_client: object, df: pd.DataFrame, channel_id: str, max_vid
 
     return new_df
 
-def linear_pop_metric(df: pd.DataFrame, include_comments: bool = False) -> pd.DataFrame:
+def linear_pop_metric(df: pd.DataFrame, include_comments: bool = True) -> pd.DataFrame:
 
     # Performs a popularity metric based on a channel's "baseline" linear relationship between views and likes.
 
@@ -359,13 +360,17 @@ def linear_pop_metric(df: pd.DataFrame, include_comments: bool = False) -> pd.Da
         
         model.fit(X,y)
 
-        # Find the difference between actual views and predicted views, divide by actual to normalize.  (+1 to avoid division by zero)
+        # Find the difference between actual views and predicted views, convert to z-score to normalize
 
-        frame.loc[:,'pop_metric'] = ( (y - model.predict(X)) / (model.predict(X)) ).flatten()
+        # frame.loc[:,'pop_metric'] = ( (y - model.predict(X)) / (model.predict(X)) ).flatten()
+
+        frame.loc[:, 'log_reg_diff'] = y - model.predict(X)
+        frame.loc[:, 'pop_metric'] = (frame.log_reg_diff - frame.log_reg_diff.mean()) / (frame.log_reg_diff.std())
 
         out_frame = pd.concat([out_frame, frame], ignore_index = True)
 
     return out_frame
+
 
 def scrape_channel_ids(url, id_type):
 
