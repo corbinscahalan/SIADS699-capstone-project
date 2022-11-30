@@ -36,8 +36,9 @@ def get_vid_details(url: str, path_to_thumbs:str, verbose:int=0) -> Dict:
         'skip_download': True,
         'subtitleslangs': ['en',],
         'writethumbnail': True,
-        'nooverwrites': True,
-        'age_limit': 40,
+        'nooverwrites': False,
+        'no_warnings': True,
+        'ignoreerrors': True,
         'outtmpl': os.path.join(path_to_thumbs, '%(id)s.%(ext)s')
     }
 
@@ -134,9 +135,10 @@ def extract_by_id(video_id:str, thumb_folder:str, ydl_verbose:int=0) -> pd.Serie
     ]
     info_dict = {key: None for key in keys}
     
-    try:
-        vid_info = get_vid_details(url, thumb_folder, ydl_verbose)
-    except Exception:
+    
+    vid_info = get_vid_details(url, thumb_folder, ydl_verbose)
+
+    if vid_info is None:
         info_dict['subtitles'] = '---missing---'
         info_dict['thumb_name'] = '---missing---'
         return pd.Series(info_dict)
