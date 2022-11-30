@@ -14,6 +14,13 @@ import pandas as pd
 import numpy as np
 from typing import List, Set, Dict, Tuple, Optional
 from sklearn import linear_model
+import requests
+from bs4 import BeautifulSoup
+import re
+import scipy.stats as stats
+import urllib.request
+import json
+import isodate
 
 
 def make_client(api_key: str) -> object:
@@ -326,7 +333,7 @@ def expand_channel(yt_client: object, df: pd.DataFrame, channel_id: str, max_vid
 
     return new_df
 
-def linear_pop_metric(df: pd.DataFrame, include_comments: bool = False) -> pd.DataFrame:
+def linear_pop_metric(df: pd.DataFrame, include_comments: bool = True) -> pd.DataFrame:
 
     # Performs a popularity metric based on a channel's "baseline" linear relationship between views and likes.
 
@@ -353,10 +360,199 @@ def linear_pop_metric(df: pd.DataFrame, include_comments: bool = False) -> pd.Da
         
         model.fit(X,y)
 
-        # Find the difference between actual views and predicted views, divide by actual to normalize.  (+1 to avoid division by zero)
+        # Find the difference between actual views and predicted views, convert to z-score to normalize
 
-        frame.loc[:,'pop_metric'] = ( (y - model.predict(X)) / (model.predict(X)) ).flatten()
+        # frame.loc[:,'pop_metric'] = ( (y - model.predict(X)) / (model.predict(X)) ).flatten()
+
+        frame.loc[:, 'log_reg_diff'] = y - model.predict(X)
+        frame.loc[:, 'pop_metric'] = (frame.log_reg_diff - frame.log_reg_diff.mean()) / (frame.log_reg_diff.std())
 
         out_frame = pd.concat([out_frame, frame], ignore_index = True)
 
     return out_frame
+
+
+def scrape_channel_ids(url, id_type):
+
+    # Scrape channel IDs and channel usernames from YouTube URLs on any given website. 
+    # We used ~50 websites that recommended top cooking channels
+
+    # Parameters:
+    # url: website URL as a string
+    # id_type: the ID type you want to scrape; 'channel_id' or 'channel_username'
+
+    page = requests.get(url) 
+    soup = BeautifulSoup(page.content, 'html.parser')
+    urls = soup.find_all('a', href=True)
+
+    hrefs=[]
+    for item in urls:
+        hrefs.append(item.get('href'))
+
+    youtube_urls=[]
+    for item in hrefs:
+        if id_type == 'channel_id':
+            youtube_urls.append(re.findall("https://www.youtube.com/channel[^\s?]+", item))
+        if id_type == 'channel_username':
+            youtube_urls.append(re.findall("https://www.youtube.com/c/[^\s?]+", item))
+
+
+    flat_list = [str(item.split('/')[4]) for sublist in youtube_urls for item in sublist]
+
+    return flat_list
+
+def get_channel_stats(youtube, channel_id, id_type):
+    
+    # Get the YouTube API response based on the IDs you scrape using scrape_channel_ids
+
+    # Parameters:
+    # youtube: result of make_client
+    # channel_id: scraped ID
+    # id_type: 'channel_id' or 'channel_username'
+
+    if id_type == 'channel_id':
+        request = youtube.channels().list(
+            part = 'snippet,contentDetails,statistics',
+            id=channel_id
+        )
+
+        response = request.execute()
+  
+    if id_type == 'channel_username':
+        request = youtube.channels().list(
+        part = 'snippet,contentDetails,statistics',
+        forUsername=channel_id
+        )
+
+        response = request.execute()
+    
+    return response['items']
+
+def get_video_list(youtube, upload_id):
+
+    # Get a channel's videos based on the upload id
+
+    # Parameters:
+    # youtube: result of make_client
+    # upload_id:  channel_stats[0]['contentDetails']['relatedPlaylists']['uploads']
+
+    video_list = []
+    request = youtube.playlistItems().list(
+        part="snippet,contentDetails",
+        playlistId=upload_id,
+        maxResults=50
+    )
+    next_page = True
+    while next_page:
+        response = request.execute()
+        data = response['items']
+
+        for video in data:
+            video_id = video['contentDetails']['videoId']
+            if video_id not in video_list:
+                video_list.append(video_id)
+
+        if 'nextPageToken' in response.keys():
+            next_page = True
+            request = youtube.playlistItems().list(
+                part="snippet,contentDetails",
+                playlistId=upload_id,
+                pageToken=response['nextPageToken'],
+                maxResults=50
+            )
+        else:
+            next_page = False
+
+    return video_list
+
+def get_video_details(youtube, video_list):
+
+    # Extract the columns needed for the final data frame based on the video list
+
+    # Parameters:
+    # youtube: result of make_client
+    # video_list: videos from get_video_list
+
+    stats_list=[]
+    for i in range(0, len(video_list), 50):
+        request= youtube.videos().list(
+            part="snippet,contentDetails,statistics",
+            id=video_list[i:i+50]
+        )
+
+        data = request.execute()
+        for video in data['items']:
+            chan_id = video['snippet']['channelId']
+            vid_id = video['id']
+            vid_name = video['snippet']['title']
+            vid_publish_dt = video['snippet']['publishedAt']
+            vid_thumb = video['snippet']['thumbnails']['default']['url']
+            vid_duration = video['contentDetails']['duration']
+            vid_caption = video['contentDetails']['caption']
+            vid_viewcount = video['statistics'].get('viewCount',0)
+            vid_likecount = video['statistics'].get('likeCount',0)
+            vid_commentcount = video['statistics'].get('commentCount',0)
+            data_dict=dict(chan_id=chan_id, vid_id=vid_id, vid_name=vid_name, vid_publish_dt=vid_publish_dt,
+                          vid_thumb=vid_thumb,vid_duration=vid_duration,vid_caption=vid_caption,vid_viewcount=vid_viewcount,
+                          vid_likecount=vid_likecount,vid_commentcount=vid_commentcount)
+            stats_list.append(data_dict)
+
+    return stats_list
+
+def create_video_df(youtube, channel_ids, id_type):
+
+    # Input a list of channel IDs, and this function outputs all videos for those channel IDs in the format needed for this project
+
+    # Parameters:
+    # youtube: result of make_client
+    # channel_ids: list of channel IDs
+    # id_type: 'channel_id' or 'channel_username' 
+
+    channel_dfs = []
+    vid_dfs = []
+    for channel_id in channel_ids:
+        try:
+            channel_stats = get_channel_stats(youtube, channel_id, id_type)
+
+            channel_dfs.append(pd.json_normalize(channel_stats))
+
+            upload_id = channel_stats[0]['contentDetails']['relatedPlaylists']['uploads']
+            video_list = get_video_list(youtube, upload_id)
+
+            video_data = get_video_details(youtube, video_list)
+            vid_dfs.append(pd.json_normalize(video_data))
+        except:
+            pass
+
+    channel_df = pd.concat(channel_dfs)
+
+    vid_df = pd.concat(vid_dfs)
+
+    channel_df = channel_df.rename(columns={'id':'chan_id','snippet.title':'chan_name','statistics.viewCount':'chan_viewcount',
+                                            'statistics.subscriberCount':'chan_subcount','snippet.publishedAt':'chan_start_dt',
+                                            'snippet.thumbnails.default.url':'chan_thumb','statistics.videoCount':'chan_vidcount'})
+  
+    channel_df = channel_df[['chan_id','chan_name','chan_viewcount','chan_subcount','chan_start_dt','chan_thumb','chan_vidcount']]
+
+    final_df = vid_df.merge(channel_df, how='left', on='chan_id')
+
+    column_order = ['chan_id','chan_name','chan_viewcount','chan_subcount','chan_start_dt','chan_thumb','chan_vidcount',
+                    'vid_id','vid_name','vid_publish_dt','vid_thumb','vid_duration','vid_caption','vid_viewcount','vid_likecount','vid_commentcount']
+    
+    return final_df[column_order]
+
+def remove_unqualified_videos(df):
+
+    # data cleaning for videos
+    # remove videos<60 seconds and any that contain '#shorts' in the title
+    # also drop duplicates based on the vid_id
+
+    #parameters: dataframe that you are looking to clean
+
+
+    df = df[df['vid_duration'].notna()]
+    df = df.drop_duplicates(subset='vid_id', keep="first")
+    df = df[~df['vid_name'].str.contains('#shorts')]
+    df['vid_seconds'] = df['vid_duration'].apply(lambda x: isodate.parse_duration(x).total_seconds())
+    df = df[df['vid_seconds']>60]
+    return df.drop(columns=['vid_seconds']).reset_index(drop=True)
