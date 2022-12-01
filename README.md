@@ -18,4 +18,4 @@ The below files show how to extract data and run our models.
 </ol>
 
 ## Data Access
-Data supporting this research are openly available by creating a developer account for <a href='https://developers.google.com/youtube/v3' target='_blank'>YouTube API access</a> and installing <a href='https://github.com/ytdl-org/youtube-dl/' target='_blank'>youtube-dl</a> for the remaining columns that aren't accessed via the YouTube API. The final datasets used in the original project can be found in our <a href='https://drive.google.com/drive/folders/1QfuYGdiM4TEcEzNoDxECfWSht-CM5jG8?usp=sharing' target='_blank'>Google Drive</a>.
+Data supporting this research are openly available by creating a developer account for <a href='https://developers.google.com/youtube/v3' target='_blank'>YouTube API access</a> and installing <a href='https://github.com/ytdl-org/youtube-dl/' target='_blank'>youtube-dl</a> for the remaining columns that aren't accessed via the YouTube API. The final datasets generated and used in the original project can be found in our <a href='https://drive.google.com/drive/folders/1QfuYGdiM4TEcEzNoDxECfWSht-CM5jG8?usp=sharing' target='_blank'>Google Drive</a>.
