@@ -9,8 +9,10 @@ From bloggers to influencers, the creator economy is estimated to be worth more 
 </ol>
 
 ## Demo Notebooks & Files
+The below files show how to extract data and run our models.
 <ol>
-  <li>Data Extraction & Cleaning</li>
+  <li>YouTube API Data Extraction</li>
+  <li>YouTube-DL Data Extraction</li>
   <li>RNN</li>
   <li>CNN</li>
 </ol>
