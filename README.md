@@ -12,7 +12,7 @@ From bloggers to influencers, the creator economy is estimated to be worth more 
 The below files show how to extract data and run our models.
 <ol>
   <li><a href="https://github.com/corbinscahalan/SIADS699-capstone-project/blob/main/YouTube%20API%20Data%20Extraction%20Demo/data_extraction_and_cleaning_demo.ipynb" target="_blank">YouTube API Data Extraction</a></li>
-  <li>YouTube-DL Data Extraction</li>
+  <li><a href="https://github.com/corbinscahalan/SIADS699-capstone-project/blob/main/ydl_data_gathyering.ipynb" target="_blank">YouTube-DL Data Extraction</a></li>
   <li>RNN</li>
   <li>CNN</li>
 </ol>
