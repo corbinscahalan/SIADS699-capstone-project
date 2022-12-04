@@ -53,6 +53,9 @@ def clean_subtitles(subtitles: List[str]) -> str:
 
 def prep_subtitle_data(df: pd.DataFrame, sub_field: str = 'subtitles', pop_field: str = 'pop_metric', vocab_size: int = 2500, train_size: int = 1000) -> (np.array, np.array):
 
+    # DEPRECATED
+    # Data prep handled by rnn_master now
+
     # Prepares data for RNN by cleaning and tokenizing subtitles
 
     # Arguments:
@@ -68,7 +71,7 @@ def prep_subtitle_data(df: pd.DataFrame, sub_field: str = 'subtitles', pop_field
 
     sub_df = df[[sub_field, pop_field]]
 
-    sub_df[sub_field] = df[sub_field].apply(lambda x: clean_subtitles(eval(x)))
+    sub_df.loc[:,sub_field] = df.loc[:,sub_field].apply(lambda x: clean_subtitles(x))
 
     tkn = Tokenizer(num_words=vocab_size, lower=True, split=' ', oov_token='<UNK>')
 
@@ -103,26 +106,76 @@ class rnn_master():
 
     def __init__(self, make_model: bool = True):
 
-        self.vocab_size = 2500   # Number of distinct tokens to use during tokenization (minus two)
-        self.train_size = 1000   # The size of the individual training instances -- number of tokens taken from each subtitle field, with padding if necessary
-        self.embed_size = 100    # The dimension of the vector which token are converted to by the embedding layer
-        self.num_LSTM = 32       # The number of LSTM cells in that layer
-        self.num_dense = 100     # The number of nodes in the densely connected layer
+        # Default RNN parameters, may be changed after instantiation
+
+        self.vocab_size = 5000   # Number of distinct tokens to use during tokenization (minus two)
+        self.train_size = 50   # The size of the individual training instances -- number of tokens taken from each subtitle field, padded if necessary
+        self.embed_size = 64    # The dimension of the vector which tokens are converted to by the embedding layer
+        self.num_LSTM = 16       # The number of LSTM cells in that layer
+        self.num_dense = 64     # The number of nodes in the densely connected layer
+        self.batch_size = 50    # The size of the training batches
 
         self.X = None
         self.y = None
         self.model = None
+        self.X_val = None
+        self.y_val = None
+        self.tokenizer = None
 
         if make_model:
 
             self.make_rnn()
 
 
-    def prep_data(self, df: pd.DataFrame, sub_field: str = 'subtitles', pop_field: str = 'pop_metric') -> (np.array, np.array):
+    def prep_data(self, train_df: pd.DataFrame, val_df: pd.DataFrame, sub_field: str = 'subtitles', pop_field: str = 'pop_metric') -> (np.array, np.array):
 
-        # See prep_subtitle_data
+        # Given a split training and validation dataframe, prepares tokenized data for training RNN
 
-        self.X, self.y = prep_subtitle_data(df, sub_field, pop_field, vocab_size=self.vocab_size, train_size=self.train_size)
+        # self.X, self.y = prep_subtitle_data(df, sub_field, pop_field, vocab_size=self.vocab_size, train_size=self.train_size)
+
+        self.tokenizer = Tokenizer(num_words=self.vocab_size, lower=True, split=' ', oov_token='<UNK>')
+
+        self.tokenizer.fit_on_texts(train_df[sub_field])
+
+        sub_seqs = self.tokenizer.texts_to_sequences(train_df[sub_field])
+
+        num_rows = len(sub_seqs)
+
+        self.X = np.zeros((num_rows, self.train_size))
+
+        # Pad the sequences with trailing zeros if necessary
+
+        for i in range(num_rows):
+
+            if len(sub_seqs[i]) >= self.train_size:
+
+                self.X[i] = sub_seqs[i][:self.train_size]
+
+            else:
+
+                self.X[i] = np.pad(sub_seqs[i], (0, self.train_size-len(sub_seqs[i])), 'constant')
+
+        self.y = np.array(train_df[pop_field])
+
+        # Also tokenize and pad the validation data
+
+        val_seqs = self.tokenizer.texts_to_sequences(val_df[sub_field])
+
+        num_rows = len(val_seqs)
+
+        self.X_val = np.zeros((num_rows, self.train_size))
+
+        for i in range(num_rows):
+
+            if len(val_seqs[i]) >= self.train_size:
+
+                self.X_val[i] = val_seqs[i][:self.train_size]
+
+            else:
+
+                self.X_val[i] = np.pad(val_seqs[i], (0, self.train_size-len(val_seqs[i])), 'constant')
+
+        self.y_val = np.array(val_df[pop_field])
 
         return None
 
@@ -136,18 +189,20 @@ class rnn_master():
             Masking(mask_value=0.0),
             LSTM(self.num_LSTM, return_sequences=False, dropout=0.1, recurrent_dropout=0.1),
             Dense(self.num_dense, activation='relu'),
-            Dense(1, activation=None)
+            Dense(1, activation='linear')
         ])
 
-        self.model.compile(loss = tf.keras.losses.MeanSquaredError(), optimizer = 'adam', metrics = ['accuracy'])
+        self.model.compile(loss = tf.keras.losses.MeanSquaredError(), optimizer = 'adam', metrics = ['mean_absolute_error'])
 
         # TODO: Add a callback
 
         print(self.model.summary())
 
+        return None
 
 
-    def train_rnn(self, num_epochs: int = 5):
+
+    def train_rnn(self, num_epochs: int = 5, val_data = None):
 
         # Train the RNN model with prepared data and labels
 
@@ -157,9 +212,14 @@ class rnn_master():
 
             return None
         
-        self.model.fit(self.X, self.y, epochs=num_epochs)
+        if val_data is None:
 
+            val_data = (self.X_val, self.y_val)
 
+        self.model.fit(self.X, self.y, batch_size = self.batch_size, epochs=num_epochs, validation_data=val_data)
+
+        return None
+        
 
     
 
