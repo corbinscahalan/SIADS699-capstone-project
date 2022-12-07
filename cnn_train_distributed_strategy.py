@@ -9,23 +9,17 @@ from tensorflow.keras import optimizers
 
 from cnn_model import VggCnnModel
 
-# memory management
-gpus = tf.config.list_physical_devices('GPU')
-if gpus:
-    for gpu in gpus:
-        tf.config.experimental.set_virtual_device_configuration(gpu,[tf.config.experimental.VirtualDeviceConfiguration(memory_limit=13000)])
-
 
 # for continued training setting random seed to get same split everytime this script is run
 RANDOM_SEED=1836
 # data
 
-checkpoint_dir = '/home/alevink/capstone/checkpoints_folder_fit'
+checkpoint_dir = 'checkpoints_folder_fit'
 
 
-folder = '/home/alevink/capstone/nn_images/cnn_images'
+folder = 'nn_images/cnn_images'
 
-data_labels_metric = pd.read_json('/home/alevink/capstone/cnn_data_train.json.gz')[['thumb_name', 'pop_metric']]
+data_labels_metric = pd.read_json('cnn_data_train.json.gz')[['thumb_name', 'pop_metric']]
 print('data shape', data_labels_metric.shape)
 
 
@@ -104,9 +98,6 @@ with strategy.scope():
 
     
 
-
-data_rec = pd.DataFrame(columns=['epoch', 'train_loss', 'train_rmse', 'test_loss', 'test_rmse']).set_index('epoch', drop=True)
-
 train_dist_dataset, train_steps, test_dist_dataset, test_steps = custom_data_loader(folder, 
                                                                                    data_labels_metric, 
                                                                                    batch_size=GLOBAL_BATCH_SIZE, 
@@ -128,7 +119,7 @@ history = CnnModel.fit(train_dist_dataset,
 
 
 print('Saving Model...')
-CnnModel.save('/home/alevink/capstone/saved_model_fit/CNNModel')
+CnnModel.save('saved_model_fit/CNNModel')
 
 results_df = pd.DataFrame(history.history)
-results_df.to_json('/home/alevink/capstone/model_history')
+results_df.to_json('model_history.json')
