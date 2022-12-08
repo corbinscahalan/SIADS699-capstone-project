@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import os
 
@@ -9,17 +10,25 @@ from tensorflow.keras import optimizers
 
 from cnn_model import VggCnnModel
 
+# memory management
+gpus = tf.config.list_physical_devices('GPU')
+if gpus:
+    for gpu in gpus:
+        tf.config.experimental.set_virtual_device_configuration(gpu,[tf.config.experimental.VirtualDeviceConfiguration(memory_limit=13000)])
+
 
 # for continued training setting random seed to get same split everytime this script is run
 RANDOM_SEED=1836
 # data
 
-checkpoint_dir = 'checkpoints_folder_fit'
+checkpoint_dir = '/home/alevink/capstone/checkpoints_folder_fit'
+checkpoint_file_name = os.path.join(checkpoint_dir, 'ckpt', '{epoch:02d}-{val_mae:.6f}')
 
 
-folder = 'nn_images/cnn_images'
+folder = '/home/alevink/capstone/nn_images/cnn_images'
 
-data_labels_metric = pd.read_json('cnn_data_train.json.gz')[['thumb_name', 'pop_metric']]
+data_labels_metric = pd.read_json('/home/alevink/capstone/cnn_data_train.json.gz')[['thumb_name', 'vid_viewcounts']]
+data_labels_metric['vid_viewcounts'] = np.log(data_labels_metric['vid_viewcounts'] + 1)
 print('data shape', data_labels_metric.shape)
 
 
@@ -61,14 +70,14 @@ def custom_data_loader(path_to_folder:str, scores:pd.Series, batch_size:int=32, 
     test_steps = test_list.shape[0] // batch_size
 
 
-    train_ds = tf.data.Dataset.from_tensor_slices((train_list.thumb_name.values, train_list.pop_metric.values))
-    test_ds = tf.data.Dataset.from_tensor_slices((test_list.thumb_name.values, test_list.pop_metric.values))
+    train_ds = tf.data.Dataset.from_tensor_slices((train_list.thumb_name.values, train_list.vid_viewcounts.values))
+    test_ds = tf.data.Dataset.from_tensor_slices((test_list.thumb_name.values, test_list.vid_viewcounts.values))
 
     train_ds = train_ds.map(lambda p, s: (image_prep(p, image_size=image_size), s), num_parallel_calls=AUTOTUNE)
     test_ds = test_ds.map(lambda p, s: (image_prep(p, image_size=image_size), s), num_parallel_calls=AUTOTUNE)
 
-    train_ds = train_ds.batch(batch_size).shuffle(buffer_size=100).repeat().prefetch(buffer_size=AUTOTUNE)
-    test_ds = test_ds.batch(batch_size).shuffle(buffer_size=100).repeat().prefetch(buffer_size=AUTOTUNE)
+    train_ds = train_ds.batch(batch_size).repeat().prefetch(buffer_size=AUTOTUNE)
+    test_ds = test_ds.batch(batch_size).repeat().prefetch(buffer_size=AUTOTUNE)
 
     if with_distribute:
         train_ds = strategy.experimental_distribute_dataset(train_ds)
@@ -87,9 +96,9 @@ with strategy.scope():
 
     CnnModel.compile(optimizer=optimizers.Adam(), 
                     loss=losses.MeanSquaredError(reduction=losses.Reduction.NONE), 
-                    metrics=[metrics.RootMeanSquaredError(), metrics.MeanAbsoluteError()])
+                    metrics=[metrics.RootMeanSquaredError(name='rmse'), metrics.MeanAbsoluteError(name='mae')])
 
-    checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_dir)
+    checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_file_name, monitor='val_mae', mode='min')
     # check_manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=3)
 
 
@@ -109,7 +118,7 @@ EPOCHS = 100
 
 history = CnnModel.fit(train_dist_dataset, 
                         epochs=EPOCHS,
-                        callbacks=checkpoint, 
+                        callbacks=[checkpoint,], 
                         validation_data=test_dist_dataset,
                         steps_per_epoch=train_steps,
                         validation_steps=test_steps,
@@ -119,7 +128,7 @@ history = CnnModel.fit(train_dist_dataset,
 
 
 print('Saving Model...')
-CnnModel.save('saved_model_fit/CNNModel')
+CnnModel.save('/home/alevink/capstone/saved_model_fit/CNNModel')
 
 results_df = pd.DataFrame(history.history)
-results_df.to_json('model_history.json')
+results_df.to_json('/home/alevink/capstone/model_history.json')
