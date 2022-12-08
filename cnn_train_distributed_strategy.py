@@ -21,13 +21,13 @@ if gpus:
 RANDOM_SEED=1836
 # data
 
-checkpoint_dir = '/home/alevink/capstone/checkpoints_folder_fit'
+checkpoint_dir = 'checkpoints_folder_fit'
 checkpoint_file_name = os.path.join(checkpoint_dir, 'ckpt', '{epoch:02d}-{val_mae:.6f}')
 
 
-folder = '/home/alevink/capstone/nn_images/cnn_images'
+folder = 'nn_images/cnn_images'
 
-data_labels_metric = pd.read_json('/home/alevink/capstone/cnn_data_train.json.gz')[['thumb_name', 'vid_viewcount']]
+data_labels_metric = pd.read_json('cnn_data_train.json.gz')[['thumb_name', 'vid_viewcount']]
 data_labels_metric['vid_viewcount'] = np.log(data_labels_metric['vid_viewcount'] + 1)
 print('data shape', data_labels_metric.shape)
 
@@ -99,11 +99,6 @@ with strategy.scope():
                     metrics=[metrics.RootMeanSquaredError(name='rmse'), metrics.MeanAbsoluteError(name='mae')])
 
     checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_file_name, monitor='val_mae', mode='min')
-    # check_manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=3)
-
-
-
-    # status = checkpoint.restore(check_manager.latest_checkpoint)
 
     
 
@@ -128,7 +123,7 @@ history = CnnModel.fit(train_dist_dataset,
 
 
 print('Saving Model...')
-CnnModel.save('/home/alevink/capstone/saved_model_fit/CNNModel')
+CnnModel.save('saved_model_fit/CNNModel')
 
 results_df = pd.DataFrame(history.history)
-results_df.to_json('/home/alevink/capstone/model_history.json')
+results_df.to_json('model_history.json')
