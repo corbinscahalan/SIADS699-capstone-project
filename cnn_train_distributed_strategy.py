@@ -27,8 +27,8 @@ checkpoint_file_name = os.path.join(checkpoint_dir, 'ckpt', '{epoch:02d}-{val_ma
 
 folder = '/home/alevink/capstone/nn_images/cnn_images'
 
-data_labels_metric = pd.read_json('/home/alevink/capstone/cnn_data_train.json.gz')[['thumb_name', 'vid_viewcounts']]
-data_labels_metric['vid_viewcounts'] = np.log(data_labels_metric['vid_viewcounts'] + 1)
+data_labels_metric = pd.read_json('/home/alevink/capstone/cnn_data_train.json.gz')[['thumb_name', 'vid_viewcount']]
+data_labels_metric['vid_viewcount'] = np.log(data_labels_metric['vid_viewcount'] + 1)
 print('data shape', data_labels_metric.shape)
 
 
@@ -70,8 +70,8 @@ def custom_data_loader(path_to_folder:str, scores:pd.Series, batch_size:int=32, 
     test_steps = test_list.shape[0] // batch_size
 
 
-    train_ds = tf.data.Dataset.from_tensor_slices((train_list.thumb_name.values, train_list.vid_viewcounts.values))
-    test_ds = tf.data.Dataset.from_tensor_slices((test_list.thumb_name.values, test_list.vid_viewcounts.values))
+    train_ds = tf.data.Dataset.from_tensor_slices((train_list.thumb_name.values, train_list.vid_viewcount.values))
+    test_ds = tf.data.Dataset.from_tensor_slices((test_list.thumb_name.values, test_list.vid_viewcount.values))
 
     train_ds = train_ds.map(lambda p, s: (image_prep(p, image_size=image_size), s), num_parallel_calls=AUTOTUNE)
     test_ds = test_ds.map(lambda p, s: (image_prep(p, image_size=image_size), s), num_parallel_calls=AUTOTUNE)
