@@ -1,3 +1,6 @@
+# Some of the code below based on examples from 
+# https://www.tensorflow.org/api_docs/python/tf/distribute/MirroredStrategy
+# https://www.tensorflow.org/guide/distributed_training#use_tfdistributestrategy_with_keras_modelfit
 import numpy as np
 import pandas as pd
 import os
