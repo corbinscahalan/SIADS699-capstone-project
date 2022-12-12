@@ -124,7 +124,6 @@ def extract_by_id(video_id:str, thumb_folder:str, ydl_verbose:int=0) -> pd.Serie
     
     try:
         sub_file = video_id + '.en.' + vid_info['requested_subtitles']['en']['ext']
-        # sub_file = [file.name for file in os.scandir(thumb_folder) if file.name.startswith(video_id + '.en')][0]
         info_dict['subtitles'] = extract_subs(sub_file, thumb_folder)
     except Exception:
         info_dict['subtitles'] = '---missing---'
