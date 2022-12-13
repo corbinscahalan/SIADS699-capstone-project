@@ -1,0 +1,11 @@
+Statistic,RNN Dataset,CNN Dataset,Ensemble Dataset
+Row Count,"293,475","428,023","71,233"
+Video Views Mean,"339,346","299,253","326,419"
+Video Views SD,"3,061,501","2,767,015","2,562,924"
+Video Views IQR,"[541 - 75,300]","[451 - 59,432]","[509 - 66,995]"
+Video Likes Mean,"5,902","4,953","5,547"
+Video Likes SD,"37,437","36,030","31,959"
+Video Likes IQR,[19 - 189],"[16 - 1,328]",[18 - 1689]
+Video Comments Mean,373,311,355
+Video Comments SD,"2,519","4,284","2,533"
+Video Comments IQR,[4 - 145],[3 -105],[4 - 134]

@@ -1,0 +1,50 @@
+Column,Source,Description
+chan_query,YouTube API,The query used to extract a given video; none for popular videos via web scraping method
+chan_id,YouTube API,YouTube’s unique ID per channel
+chan_name,YouTube API,Channel name from channel creator
+chan_viewcount,YouTube API,Channel’s total view count at the moment of extraction
+chan_subcount,YouTube API,Channel’s total subscriber count at the moment of extraction
+chan_start_dt,YouTube API,Channel’s creation date
+chan_thumb,YouTube API,Channel’s thumbnail extracted by YouTube API
+chan_vidcount,YouTube API,Channel’s total video count at the moment of extraction
+vid_id,YouTube API,YouTube’s unique ID per video
+vid_name,YouTube API,Video Title
+vid_publish_dt,YouTube API,Video’s publish date
+vid_thumb,YouTube API,Video’s thumbnail at moment of extraction; note that a YouTuber can change thumbnails several times to A/B test which drives more views
+vid_duration,YouTube API,Video length
+vid_caption,YouTube API,Boolean whether the video includes captions
+vid_viewcount,YouTube API,Video’s total view count at moment of extraction
+vid_likecount,YouTube API,Video’s total like count at moment of extraction
+vid_commentcount,YouTube API,Video’s total comment count at moment of extraction
+vid_seconds,YouTube API,Video’s length in seconds based on vid_duration column
+description,YouTube DL,Video’s description
+duration,YouTube DL,Video’s length
+age_limit,YouTube DL,Whether the video has age restrictions
+categories,YouTube DL,Category label for the video
+tags,YouTube DL,Keywords that the YouTuber adds to their video
+is_live,YouTube DL,If the video was live at the time it went up on youtube
+width,YouTube DL,The resolution width of the video in pixels
+height,YouTube DL,The resolution height of the video in pixels
+fps,YouTube DL,Frames per second
+vcodec,YouTube DL,Video codec used
+vbr,YouTube DL,Video bitrate used
+acodec,YouTube DL,Audio codec used
+abr,YouTube DL,Audio bitrate used
+thumb_name,YouTube DL,Thumbnail file name
+subtitles,YouTube DL,Auto-generated subtitles per video
+thumb_width,YouTube DL,Width of the thumbnail image
+thumb_height,YouTube DL,Height of the thumbnail image
+vid_name_chars,Built Feature,number of characters in the video title
+vid_name_words,Built Feature,number of words in the video title
+desc_chars,Built Feature,number of characters in the video description
+desc_words,Built Feature,number of words in the video description
+subtitle_chars,Built Feature,number of characters in the video subtitles
+subtitle_words,Built Feature,number of words in the video subtitles
+subtitle_words_unique,Built Feature,number of distinct words appearing in the video subtitles
+has_profanity,Built Feature,whether the video subtitles contain (redacted) profanity 
+has_music,Built Feature,whether the video indicates musical accompaniment
+has_links,Built Feature,whether the video description has URLs (boolean)
+link_perc,Built Feature,how much of the description text is devoted to URLs
+num_tags,Built Feature,The number of characters in the video tags
+num_emoji_in_tags,Built Feature,The number of emoji in the video tags
+cnn_thumb_preds,Built Feature,Output of CNN model
