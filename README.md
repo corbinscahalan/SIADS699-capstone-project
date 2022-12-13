@@ -1,4 +1,4 @@
-# Predicting YouTube Cooking Video Popularity
+# Predicting Popularity for YouTube Cooking Videos
 
 From bloggers to influencers, the creator economy is estimated to be worth more than $104 billion and have grown to 50 million entertainers (Flynn 2022). With 2 billion monthly logged-in users and more than a billion hours of videos watched daily (YouTube 2022), YouTube is a powerhouse for the creator economy that is considered the second most popular website in the world (Similarweb 2022). Some YouTube creators, also known as YouTubers, are able to make millions from advertisement revenue share, brand partnerships, and product placements in their videos (Osborn 2022). Of course, not every video topic generates strong revenue for creators, but cooking is considered a niche on YouTube with one of the highest cost per thousand impressions (Tasty Edits). How do cooking YouTubers gain their viewership, and how do they know whether their videos will be popular? We’ve developed a model that creators can use to predict whether their cooking video will be popular before they upload it. 
 
